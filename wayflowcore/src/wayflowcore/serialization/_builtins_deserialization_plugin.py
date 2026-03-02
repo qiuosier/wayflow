@@ -59,6 +59,7 @@ from pyagentspec.llms import LlmConfig as AgentSpecLlmConfig
 from pyagentspec.llms import OciGenAiConfig as AgentSpecOciGenAiModel
 from pyagentspec.llms.llmgenerationconfig import LlmGenerationConfig as AgentSpecLlmGenerationConfig
 from pyagentspec.llms.ociclientconfig import OciClientConfig as AgentSpecOciClientConfig
+from pyagentspec.llms.ocigenaiconfig import OciAPIType as AgentSpecOciAPIType
 from pyagentspec.llms.ociclientconfig import (
     OciClientConfigWithApiKey as AgentSpecOciClientConfigWithApiKey,
 )
@@ -368,6 +369,7 @@ from wayflowcore.models.ociclientconfig import (
     OCIClientConfigWithSecurityToken as RuntimeOCIClientConfigWithSecurityToken,
 )
 from wayflowcore.models.ocigenaimodel import ModelProvider as RuntimeModelProvider
+from wayflowcore.models.ocigenaimodel import OciAPIType as RuntimeOciAPIType
 from wayflowcore.models.ocigenaimodel import ServingMode as RuntimeServingMode
 from wayflowcore.models.openaiapitype import OpenAIAPIType as RuntimeOpenAIAPIType
 from wayflowcore.models.openaicompatiblemodel import (
@@ -487,6 +489,17 @@ def _format_embedding_model_url(url: str) -> str:
 
 
 class WayflowBuiltinsDeserializationPlugin(WayflowDeserializationPlugin):
+
+    def _convert_oci_apitype_to_runtime(
+        self, api_type: AgentSpecOciAPIType
+    ) -> RuntimeOciAPIType:
+        if api_type == AgentSpecOciAPIType.OPENAI_CHAT_COMPLETIONS:
+            return RuntimeOciAPIType.OPENAI_CHAT_COMPLETIONS
+        elif api_type == AgentSpecOciAPIType.OPENAI_RESPONSES:
+            return RuntimeOciAPIType.OPENAI_RESPONSES
+        elif api_type == AgentSpecOciAPIType.OCI:
+            return RuntimeOciAPIType.OCI
+        raise ValueError(f"Received invalid AgentSpec OCI API Type: {api_type}")
 
     @property
     def plugin_name(self) -> str:
@@ -2367,6 +2380,7 @@ class WayflowBuiltinsDeserializationPlugin(WayflowDeserializationPlugin):
                 serving_mode=RuntimeServingMode(agentspec_component.serving_mode.value),
                 client_config=client_config,
                 generation_config=generation_config,
+                api_type=self._convert_oci_apitype_to_runtime(agentspec_component.api_type),
                 **kwargs,
                 **self._get_component_arguments(agentspec_component),
             )

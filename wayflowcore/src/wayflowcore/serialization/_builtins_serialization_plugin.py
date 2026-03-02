@@ -67,6 +67,7 @@ from pyagentspec.llms.ociclientconfig import (
     OciClientConfigWithSecurityToken as AgentSpecOciClientConfigWithSecurityToken,
 )
 from pyagentspec.llms.ocigenaiconfig import ModelProvider as AgentSpecModelProvider
+from pyagentspec.llms.ocigenaiconfig import OciAPIType as AgentSpecOciAPIType
 from pyagentspec.llms.ocigenaiconfig import ServingMode as AgentSpecOciGenAiServingMode
 from pyagentspec.llms.ollamaconfig import OllamaConfig as AgentSpecOllamaModel
 from pyagentspec.llms.openaicompatibleconfig import OpenAIAPIType as AgentSpecOpenAIAPIType
@@ -377,6 +378,7 @@ from wayflowcore.models.ociclientconfig import (
 from wayflowcore.models.ociclientconfig import (
     OCIClientConfigWithUserAuthentication as RuntimeOCIClientConfigWithUserAuthentication,
 )
+from wayflowcore.models.ocigenaimodel import OciAPIType as RuntimeOciAPIType
 from wayflowcore.models.openaicompatiblemodel import EMPTY_API_KEY
 from wayflowcore.models.openaicompatiblemodel import (
     OpenAICompatibleModel as RuntimeOpenAICompatibleModel,
@@ -639,6 +641,18 @@ def _runtime_apitype_to_pyagentspec_apitype(
         return AgentSpecOpenAIAPIType.RESPONSES
     else:
         raise ValueError(f"Received invalid runtime API Type: {api_type}")
+    
+
+def _runtime_oci_apitype_to_pyagentspec_oci_apitype(
+    api_type: RuntimeOciAPIType,
+) -> AgentSpecOciAPIType:
+    if api_type == RuntimeOciAPIType.OPENAI_CHAT_COMPLETIONS:
+        return AgentSpecOciAPIType.OPENAI_CHAT_COMPLETIONS
+    elif api_type == RuntimeOciAPIType.OPENAI_RESPONSES:
+        return AgentSpecOciAPIType.OPENAI_RESPONSES
+    elif api_type == RuntimeOciAPIType.OCI:
+        return AgentSpecOciAPIType.OCI
+    raise ValueError(f"Received invalid runtime OCI API Type: {api_type}")
 
 
 def _runtime_messagecontent_to_pyagentspec_messagecontent(
@@ -1295,6 +1309,7 @@ class WayflowBuiltinsSerializationPlugin(WayflowSerializationPlugin):
                 description=runtime_llm.description,
                 default_generation_parameters=generation_config,
                 provider=AgentSpecModelProvider(runtime_llm.provider.value),
+                api_type=_runtime_oci_apitype_to_pyagentspec_oci_apitype(runtime_llm.api_type),
             )
         elif isinstance(runtime_llm, RuntimeOllamaModel):
             return AgentSpecOllamaModel(
